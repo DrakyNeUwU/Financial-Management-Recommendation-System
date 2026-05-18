@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip("<>")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip("<>")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("Thiếu SUPABASE_URL hoặc SUPABASE_KEY trong .env")
