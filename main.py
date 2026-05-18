@@ -23,6 +23,20 @@ app.include_router(categories.router, prefix="/categories")
 def root():
     return {"message": "Finance App đang chạy!"}
 
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={"message": "Internal Server Error", "detail": str(exc), "trace": traceback.format_exc()},
+        headers={
+            "Access-Control-Allow-Origin": "https://financial-management-recommendation.vercel.app",
+            "Access-Control-Allow-Credentials": "true"
+        }
+    )
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "supabase": "connected"}
