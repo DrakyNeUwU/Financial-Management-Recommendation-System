@@ -9,7 +9,11 @@ app = FastAPI(title="Finance App")
 # Thêm đoạn này
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://financial-management-recommendation.vercel.app"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
