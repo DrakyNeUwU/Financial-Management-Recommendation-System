@@ -1,6 +1,6 @@
-# ai-finance
+# Financial Management Recommendation System (FMRS)
 
-Ứng dụng theo dõi thu chi cá nhân. Ghi chép giao dịch, xem biến động chi tiêu theo ngày, phân loại theo danh mục .
+Ứng dụng theo dõi và phân tích tài chính cá nhân. Ghi chép thu chi, xem biến động theo ngày, phân loại danh mục theo quy tắc 50/30/20, và nhận gợi ý tài chính thông minh.
 
 ## Tech Stack
 
@@ -8,34 +8,54 @@
 |-------|-----------|
 | **Backend** | Python 3 + FastAPI + Uvicorn |
 | **Database** | Supabase (PostgreSQL) |
-| **Frontend** | HTML / CSS / JS thuần — mở thẳng trên browser, không cần build |
+| **Frontend** | Next.js (TypeScript) |
+| **Auth** | Supabase Auth + JWT |
+| **Deploy** | Railway (backend) |
 | **Env** | python-dotenv |
 
 ## Cấu trúc project
 
 ```
-ai-finance project/
+Financial-Management-Recommendation-System/
 ├── .env                        ← secrets (KHÔNG commit)
 ├── .gitignore
+├── requirements.txt            ← Python dependencies
+├── Procfile                    ← Railway start command
 ├── database.py                 ← khởi tạo kết nối Supabase
+├── auth.py                     ← xác thực JWT / Supabase Auth
 ├── main.py                     ← FastAPI app chính, CORS, routers
-├── index.html                  ← giao diện người dùng
 ├── README.md
 ├── routers/
 │   ├── __init__.py
 │   ├── categories.py           ← CRUD danh mục
 │   └── transactions.py         ← CRUD + thống kê giao dịch
+└── frontend/                   ← Next.js app
+    ├── src/
+    │   ├── app/
+    │   │   ├── page.tsx        ← trang chính
+    │   │   └── dashboard/      ← dashboard tài chính
+    │   └── lib/
+    │       ├── api.ts          ← gọi backend API
+    │       └── supabase.ts     ← Supabase client
+    └── package.json
 ```
 
 ## Setup
 
-### 1. Cài thư viện
+### 1. Clone repo
 
 ```bash
-pip install fastapi uvicorn supabase python-dotenv
+git clone https://github.com/DrakyNeUwU/Financial-Management-Recommendation-System.git
+cd Financial-Management-Recommendation-System
 ```
 
-### 2. Tạo file `.env`
+### 2. Cài thư viện Python
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Tạo file `.env`
 
 ```env
 SUPABASE_URL=https://your-project.supabase.co
@@ -44,7 +64,7 @@ SUPABASE_KEY=your-anon-key
 
 > Lấy URL và KEY từ Supabase Dashboard → Project Settings → API
 
-### 3. Tạo bảng trên Supabase
+### 4. Tạo bảng trên Supabase
 
 Chạy trong Supabase SQL Editor:
 
@@ -74,19 +94,34 @@ CREATE TABLE transactions (
 
 > **Dev mode:** RLS đang tắt trên cả 2 bảng. Bật lại khi triển khai Auth.
 
-## Chạy server
+### 5. Chạy backend
 
-```powershell
+```bash
 python -m uvicorn main:app --reload
+```
+
+### 6. Chạy frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 | URL | Mô tả |
 |-----|-------|
-| `http://localhost:8000` | Root — kiểm tra server sống |
-| `http://localhost:8000/health` | Health check |
+| `http://localhost:8000` | Backend API root |
 | `http://localhost:8000/docs` | Swagger UI tự động |
+| `http://localhost:3000` | Frontend Next.js |
 
-**Mở giao diện:** double-click `index.html` (hoặc mở bằng trình duyệt)
+## Deploy lên Railway
+
+1. Push code lên GitHub
+2. Tạo project mới trên [Railway](https://railway.app) → connect GitHub repo
+3. Thêm **Environment Variables** trong Railway dashboard:
+   - `SUPABASE_URL`
+   - `SUPABASE_KEY`
+4. Railway tự detect `Procfile` và deploy
 
 ## API Endpoints
 
@@ -96,7 +131,7 @@ python -m uvicorn main:app --reload
 |--------|----------|-------|
 | `POST` | `/transactions` | Tạo giao dịch mới |
 | `GET` | `/transactions?month=MM-YYYY` | Lấy giao dịch trong tháng |
-| `GET` | `/transactions/daily-summary?month=MM-YYYY` | Tổng chi tiêu (expense) theo ngày |
+| `GET` | `/transactions/daily-summary?month=MM-YYYY` | Tổng chi tiêu theo ngày |
 | `DELETE` | `/transactions/{id}` | Xoá giao dịch |
 
 **POST /transactions — Request body:**
@@ -112,26 +147,13 @@ python -m uvicorn main:app --reload
 
 > `note` là optional. `transaction_date` format `YYYY-MM-DD`.
 
-**GET /transactions/daily-summary — Response:**
-```json
-{
-  "month": "05-2026",
-  "data": [
-    { "date": "2026-05-01", "total_expense": 120000 },
-    { "date": "2026-05-03", "total_expense": 75000 }
-  ]
-}
-```
-
-> Chỉ tổng hợp các giao dịch loại `expense`.
-
 ---
 
 ### `/categories`
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| `GET` | `/categories` | Lấy tất cả danh mục (sắp xếp theo tên) |
+| `GET` | `/categories` | Lấy tất cả danh mục |
 | `POST` | `/categories` | Tạo danh mục mới |
 | `DELETE` | `/categories/{id}` | Xoá danh mục |
 
@@ -154,9 +176,9 @@ python -m uvicorn main:app --reload
 
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
-| `GET` | `/` | Root — `{"message": "Finance App đang chạy!"}` |
+| `GET` | `/` | `{"message": "Finance App đang chạy!"}` |
 | `GET` | `/health` | `{"status": "ok", "supabase": "connected"}` |
-| `GET` | `/docs` | Swagger UI tự động (FastAPI built-in) |
+| `GET` | `/docs` | Swagger UI (FastAPI built-in) |
 
 ## Test nhanh trên PowerShell
 
@@ -169,9 +191,6 @@ irm "http://localhost:8000/categories" | ConvertTo-Json -Depth 5
 
 # Lấy giao dịch tháng 5/2026
 irm "http://localhost:8000/transactions?month=05-2026" | ConvertTo-Json -Depth 5
-
-# Tổng chi tiêu theo ngày
-irm "http://localhost:8000/transactions/daily-summary?month=05-2026" | ConvertTo-Json -Depth 5
 
 # Thêm giao dịch
 irm "http://localhost:8000/transactions" -Method POST -ContentType "application/json" `
@@ -191,6 +210,7 @@ irm "http://localhost:8000/categories/your-uuid" -Method DELETE
 ## Lưu ý
 
 - File `.env` đã có trong `.gitignore` — **không commit lên GitHub**
-- RLS đang tắt trên cả 2 bảng (dev mode) — bật lại khi làm Auth
-- Ô số tiền hỗ trợ biểu thức: nhập `33000+36000` → tự tính ra `69000`
+- Thêm biến môi trường trực tiếp trên Railway dashboard khi deploy
+- RLS đang tắt trên cả 2 bảng (dev mode) — bật lại khi làm Auth production
 - CORS đang để `allow_origins=["*"]` — giới hạn lại khi deploy production
+- Ô số tiền hỗ trợ biểu thức: nhập `33000+36000` → tự tính ra `69000`
