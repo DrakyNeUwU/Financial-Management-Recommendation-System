@@ -1,0 +1,25 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+export const metadata: Metadata = {
+  title: "FMRS – Financial Management Recommendation System",
+  description: "Hệ thống quản lý và gợi ý tài chính cá nhân theo quy tắc 50/30/20",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="vi" className={inter.variable}>
+      <body className="antialiased">{children}</body>
+    </html>
+  );
+}
