@@ -14,7 +14,7 @@
   --expense: #ff5e5e;
   --radius: 12px;
   --font-mono: 'Courier New', Courier, monospace;
-  --font-sans: 'Segoe UI', system-ui, sans-serif;
+  --font-sans: var(--font-inter), 'Segoe UI', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
