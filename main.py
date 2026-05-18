@@ -40,3 +40,14 @@ async def global_exception_handler(request, exc):
 @app.get("/health")
 def health_check():
     return {"status": "ok", "supabase": "connected"}
+
+@app.get("/debug-env")
+def debug_env():
+    import os
+    key = os.getenv("SUPABASE_KEY", "NOT FOUND")
+    return {
+        "key_length": len(key),
+        "key_first_10": key[:10],
+        "key_last_10": key[-10:],
+        "url": os.getenv("SUPABASE_URL", "NOT FOUND")
+    }
