@@ -214,3 +214,11 @@ irm "http://localhost:8000/categories/your-uuid" -Method DELETE
 - RLS đang tắt trên cả 2 bảng (dev mode) — bật lại khi làm Auth production
 - CORS đang để `allow_origins=["*"]` — giới hạn lại khi deploy production
 - Ô số tiền hỗ trợ biểu thức: nhập `33000+36000` → tự tính ra `69000`
+
+---
+
+## 🎨 Cập nhật UI & Analytics
+
+- **Landing Page & Auth (Tự động):** Tích hợp giao diện Split Layout cực kỳ hiện đại ngay trên trang chủ (`/`), hiển thị tính năng cốt lõi và form đăng nhập cùng lúc.
+- **Typography:** Đã chuyển toàn bộ font chữ sang **Inter** để tối ưu hiển thị số liệu tài chính.
+- **Analytics:** Hỗ trợ tích hợp [PostHog](https://posthog.com) cho Frontend (theo dõi sự kiện người dùng và mức độ tương tác).
