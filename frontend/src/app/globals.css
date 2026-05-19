@@ -67,18 +67,18 @@ header {
   padding: 24px 20px;
   display: grid;
   grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
-  gap: 18px;
+  gap: 28px;
   align-items: start;
 }
 
-.sidebar { display: flex; flex-direction: column; gap: 14px; }
-.right-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+.right-column { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 22px;
 }
 
 .card-title {
@@ -234,8 +234,8 @@ select option { background: var(--surface2); }
 
 /* MONTHLY */
 .monthly-card .card-title { margin-bottom: 10px; }
-.monthly-header { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 18px; align-items: center; margin-bottom: 16px; }
-.monthly-donut { position: relative; width: 150px; height: 150px; margin: 0 auto; }
+.monthly-header { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 24px; align-items: center; margin-bottom: 20px; }
+.monthly-donut { position: relative; width: 180px; height: 180px; margin: 0 auto; }
 .monthly-donut canvas { width: 100% !important; height: 100% !important; }
 .monthly-total .eyebrow { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
 .monthly-total .amount { font-family: var(--font-mono); font-size: clamp(1.6rem,3vw,2.3rem); font-weight: 700; color: var(--text); line-height: 1.05; word-break: break-word; }
@@ -271,13 +271,13 @@ select option { background: var(--surface2); }
 .toast.error { background: rgba(255,94,94,0.1); border: 1px solid var(--expense); color: var(--expense); }
 
 @media (max-width: 768px) {
-  .container { grid-template-columns: 1fr; }
+  .container { grid-template-columns: 1fr; gap: 20px; }
   header { padding: 12px 16px; }
   .container { padding: 14px; }
   .day-list { max-height: 280px; }
   .chart-card .chart-wrap { height: 240px; }
-  .monthly-header { grid-template-columns: 1fr; }
-  .monthly-donut { width: 132px; height: 132px; }
+  .monthly-header { grid-template-columns: 1fr; gap: 16px; }
+  .monthly-donut { width: 160px; height: 160px; }
 }
 
 /* ── LOGIN PAGE STYLES ───────────────────────────────── */

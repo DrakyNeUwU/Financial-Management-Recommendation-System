@@ -111,6 +111,20 @@ export default function DashboardPage() {
     if (y && m) getTransactions(`${m}-${y}`).then(setPrevTxs).catch(() => setPrevTxs([]))
   }, [compMonthStr])
 
+  // Sync txDate when month/year changes
+  useEffect(() => {
+    setTxDate(prev => {
+      const parts = prev.split('-')
+      if (parts.length === 3) {
+        const day = parts[2]
+        const daysInNewMonth = new Date(year, month, 0).getDate()
+        const newDay = Math.min(parseInt(day, 10), daysInNewMonth)
+        return `${year}-${String(month).padStart(2, '0')}-${String(newDay).padStart(2, '0')}`
+      }
+      return prev
+    })
+  }, [month, year])
+
   // Save budgets to localStorage
   const saveBudget = (catId: string, value: string) => {
     const num = parseFloat(value)
@@ -279,7 +293,8 @@ export default function DashboardPage() {
     datasets: [{ data: [1], backgroundColor: ['#2a2d35'], borderWidth: 0, borderColor: '#16181c', hoverOffset: 0 }]
   }
   const donutOptions = {
-    responsive: true, maintainAspectRatio: false, cutout: breakdownItems.length > 0 ? '68%' : '72%',
+    responsive: true, maintainAspectRatio: false, cutout: breakdownItems.length > 0 ? '72%' : '76%',
+    layout: { padding: 14 },
     plugins: {
       legend: { display: false },
       tooltip: breakdownItems.length > 0 ? { callbacks: { label: (ctx: { label: string; raw: unknown }) => `${ctx.label}: ${fmt(ctx.raw as number)} (${totalExpense > 0 ? ((ctx.raw as number / totalExpense) * 100).toFixed(1) : 0}%)` }, backgroundColor: '#1e2128', titleColor: '#6b7280', bodyColor: '#eef0f4', borderColor: '#2a2d35', borderWidth: 1, padding: 10 } : { enabled: false }
