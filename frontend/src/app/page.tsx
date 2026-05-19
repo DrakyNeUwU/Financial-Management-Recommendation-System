@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const [txDate, setTxDate] = useState(now.toISOString().split('T')[0])
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [formExpanded, setFormExpanded] = useState(false)
 
   // category panel
   const [catPanelOpen, setCatPanelOpen] = useState(false)
@@ -148,8 +149,7 @@ export default function DashboardPage() {
     setSubmitting(true)
     try {
       await createTransaction({ type, amount, category_id: categoryId, transaction_date: txDate, note: note || undefined })
-      setAmountRaw(''); setNote('')
-      showToast('Đã lưu ✓', 'success')
+      setAmountRaw(''); setNote('')      setFormExpanded(false)      showToast('Đã lưu ✓', 'success')
       await loadAll()
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : 'Lỗi lưu giao dịch', 'error')
@@ -319,7 +319,7 @@ export default function DashboardPage() {
   }
   const lineOptions = {
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx: { raw: unknown }) => fmt(ctx.raw as number) }, backgroundColor: '#1e2128', titleColor: '#6b7280', bodyColor: '#ff5e5e', borderColor: '#2a2d35', borderWidth: 1, padding: 10 } },
+    plugins: { legend: { display: false }, tooltip: { callbacks: { title: (ctx: Array<{ label: string }>) => ctx.length > 0 ? `Ngày ${ctx[0].label}` : '', label: (ctx: { raw: unknown }) => fmt(ctx.raw as number) }, backgroundColor: '#1e2128', titleColor: '#6b7280', bodyColor: '#ff5e5e', borderColor: '#2a2d35', borderWidth: 1, padding: 10 } },
     scales: {
       x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7280', font: { family: 'Courier New', size: 10 } }, border: { color: '#2a2d35' } },
       y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#6b7280', font: { family: 'Courier New', size: 10 }, callback: (v: unknown) => fmtShort(v as number) }, border: { color: '#2a2d35' } }
@@ -425,105 +425,113 @@ export default function DashboardPage() {
 
           {/* Add Transaction Form */}
           <div className="card">
-            <div className="card-title">Thêm giao dịch</div>
-            <div className="type-toggle">
-              <div className={`type-btn${type === 'expense' ? ' active-expense' : ''}`} onClick={() => handleSetType('expense')}>− Chi tiêu</div>
-              <div className={`type-btn${type === 'income' ? ' active-income' : ''}`} onClick={() => handleSetType('income')}>+ Thu nhập</div>
-            </div>
-
-            <div className="form-group">
-              <label>Số tiền (VNĐ)</label>
-              <input type="text" placeholder="Nhập số tiền" value={amountRaw}
-                onChange={e => setAmountRaw(e.target.value)} />
-              <div className="expr-hint">{evalAmountHint(amountRaw)}</div>
-            </div>
-
-            <div className="form-group">
-              <label>Danh mục</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <select style={{ flex: 1 }} value={categoryId} onChange={e => { if (!checkAuth()) return; setCategoryId(e.target.value) }}>
-                  <option value="">-- Chọn danh mục --</option>
-                  {filteredCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-                <button type="button" className="btn-small" onClick={() => { if (!checkAuth()) return; setCatPanelOpen(v => !v) }} title="Quản lý danh mục" style={{ width: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-                  {catPanelOpen ? '−' : '+'}
-                </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }} onClick={() => setFormExpanded(!formExpanded)}>
+              <div className="card-title" style={{ margin: 0, cursor: 'pointer' }}>Thêm giao dịch</div>
+              <div style={{ fontSize: '1.2rem', color: 'var(--accent)', transition: 'transform 0.2s' }} className={formExpanded ? 'expanded' : ''}>
+                {formExpanded ? '−' : '+'}
               </div>
-              {filteredCats.length === 0 && <div className="category-type-hint">Chưa có danh mục — hãy thêm ngay</div>}
-              
-              {/* Inline Category Management */}
-              {catPanelOpen && (
-                <div style={{ marginTop: 12, padding: 12, background: 'var(--surface2)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ fontSize: '0.75rem', marginBottom: 10, fontFamily: 'var(--font-mono)', color: 'var(--muted)', letterSpacing: '0.05em' }}>QUẢN LÝ DANH MỤC</div>
-                  <div className="add-category-row" style={{ marginBottom: 12 }}>
-                    <input type="text" placeholder="Tên danh mục mới..." value={newCatName}
-                      onChange={e => setNewCatName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleAddCategory()} />
-                    <button className="btn-small" onClick={handleAddCategory}>+ Thêm</button>
-                  </div>
-                  <div className="category-panel" style={{ display: 'block', marginTop: 0, border: 'none', padding: 0, background: 'transparent' }}>
-                    <div className="category-panel-head" style={{ fontSize: '0.75rem', paddingBottom: 8 }}>Danh mục hiện có ({filteredCats.length})</div>
-                    <div className="category-list" style={{ maxHeight: 200, overflowY: 'auto', paddingRight: 4 }}>
-                      {filteredCats.length === 0
-                        ? <div className="category-empty">Chưa có danh mục cho loại này</div>
-                        : filteredCats.map(c => {
-                            const GROUP_OPTIONS: { value: Group503020 | '', label: string, color: string }[] = [
-                              { value: '',        label: '— Chưa phân loại', color: 'var(--muted)' },
-                              { value: 'needs',   label: '🏠 Thiết yếu',     color: '#5b8dee' },
-                              { value: 'wants',   label: '🎯 Muốn có',        color: '#c8f135' },
-                              { value: 'savings', label: '💰 Tiết kiệm',      color: '#a29bfe' },
-                            ]
-                            const current = c.group_50_30_20 ?? ''
-                            const opt = GROUP_OPTIONS.find(o => o.value === current)
-                            return (
-                              <div key={c.id} style={{ background: 'var(--surface)', borderRadius: 8, padding: '8px 10px', marginBottom: 8, border: '1px solid rgba(255,255,255,0.03)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: c.type === 'expense' ? 8 : 0 }}>
-                                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: opt?.color ?? 'var(--border)', flexShrink: 0, display: 'inline-block' }} />
-                                  <div style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                                  <button className="btn-delete-category" title="Xoá danh mục"
-                                    onClick={() => handleDeleteCategory(c.id, c.name)}>×</button>
-                                </div>
-                                {c.type === 'expense' && (
-                                  <select
-                                    value={current}
-                                    onChange={e => handleSetGroup(c.id, (e.target.value as Group503020) || null)}
-                                    style={{
-                                      width: '100%', fontSize: '0.72rem', padding: '4px 6px',
-                                      borderRadius: 6, background: 'var(--surface2)',
-                                      border: `1px solid ${opt?.color ?? 'var(--border)'}`,
-                                      color: opt?.color ?? 'var(--muted)',
-                                      fontFamily: 'var(--font-mono)', cursor: 'pointer',
-                                    }}
-                                  >
-                                    {GROUP_OPTIONS.map(o => (
-                                      <option key={o.value} value={o.value} style={{ color: 'var(--text)' }}>{o.label}</option>
-                                    ))}
-                                  </select>
-                                )}
-                              </div>
-                            )
-                          })
-                      }
-                    </div>
-                  </div>
+            </div>
+
+            {formExpanded && (
+              <>
+                <div className="type-toggle">
+                  <div className={`type-btn${type === 'expense' ? ' active-expense' : ''}`} onClick={() => handleSetType('expense')}>− Chi tiêu</div>
+                  <div className={`type-btn${type === 'income' ? ' active-income' : ''}`} onClick={() => handleSetType('income')}>+ Thu nhập</div>
                 </div>
-              )}
-            </div>
 
+                <div className="form-group">
+                  <label>Số tiền (VNĐ)</label>
+                  <input type="text" placeholder="Nhập số tiền" value={amountRaw}
+                    onChange={e => setAmountRaw(e.target.value)} />
+                  <div className="expr-hint">{evalAmountHint(amountRaw)}</div>
+                </div>
 
+                <div className="form-group">
+                  <label>Danh mục</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select style={{ flex: 1 }} value={categoryId} onChange={e => { if (!checkAuth()) return; setCategoryId(e.target.value) }}>
+                      <option value="">-- Chọn danh mục --</option>
+                      {filteredCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <button type="button" className="btn-small" onClick={() => { if (!checkAuth()) return; setCatPanelOpen(v => !v) }} title="Quản lý danh mục" style={{ width: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                      {catPanelOpen ? '−' : '+'}
+                    </button>
+                  </div>
+                  {filteredCats.length === 0 && <div className="category-type-hint">Chưa có danh mục — hãy thêm ngay</div>}
+                  
+                  {/* Inline Category Management */}
+                  {catPanelOpen && (
+                    <div style={{ marginTop: 12, padding: 12, background: 'var(--surface2)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ fontSize: '0.75rem', marginBottom: 10, fontFamily: 'var(--font-mono)', color: 'var(--muted)', letterSpacing: '0.05em' }}>QUẢN LÝ DANH MỤC</div>
+                      <div className="add-category-row" style={{ marginBottom: 12 }}>
+                        <input type="text" placeholder="Tên danh mục mới..." value={newCatName}
+                          onChange={e => setNewCatName(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleAddCategory()} />
+                        <button className="btn-small" onClick={handleAddCategory}>+ Thêm</button>
+                      </div>
+                      <div className="category-panel" style={{ display: 'block', marginTop: 0, border: 'none', padding: 0, background: 'transparent' }}>
+                        <div className="category-panel-head" style={{ fontSize: '0.75rem', paddingBottom: 8 }}>Danh mục hiện có ({filteredCats.length})</div>
+                        <div className="category-list" style={{ maxHeight: 200, overflowY: 'auto', paddingRight: 4 }}>
+                          {filteredCats.length === 0
+                            ? <div className="category-empty">Chưa có danh mục cho loại này</div>
+                            : filteredCats.map(c => {
+                                const GROUP_OPTIONS: { value: Group503020 | '', label: string, color: string }[] = [
+                                  { value: '',        label: '— Chưa phân loại', color: 'var(--muted)' },
+                                  { value: 'needs',   label: '🏠 Thiết yếu',     color: '#5b8dee' },
+                                  { value: 'wants',   label: '🎯 Muốn có',        color: '#c8f135' },
+                                  { value: 'savings', label: '💰 Tiết kiệm',      color: '#a29bfe' },
+                                ]
+                                const current = c.group_50_30_20 ?? ''
+                                const opt = GROUP_OPTIONS.find(o => o.value === current)
+                                return (
+                                  <div key={c.id} style={{ background: 'var(--surface)', borderRadius: 8, padding: '8px 10px', marginBottom: 8, border: '1px solid rgba(255,255,255,0.03)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: c.type === 'expense' ? 8 : 0 }}>
+                                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: opt?.color ?? 'var(--border)', flexShrink: 0, display: 'inline-block' }} />
+                                      <div style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                                      <button className="btn-delete-category" title="Xoá danh mục"
+                                        onClick={() => handleDeleteCategory(c.id, c.name)}>×</button>
+                                    </div>
+                                    {c.type === 'expense' && (
+                                      <select
+                                        value={current}
+                                        onChange={e => handleSetGroup(c.id, (e.target.value as Group503020) || null)}
+                                        style={{
+                                          width: '100%', fontSize: '0.72rem', padding: '4px 6px',
+                                          borderRadius: 6, background: 'var(--surface2)',
+                                          border: `1px solid ${opt?.color ?? 'var(--border)'}`,
+                                          color: opt?.color ?? 'var(--muted)',
+                                          fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                                        }}
+                                      >
+                                        {GROUP_OPTIONS.map(o => (
+                                          <option key={o.value} value={o.value} style={{ color: 'var(--text)' }}>{o.label}</option>
+                                        ))}
+                                      </select>
+                                    )}
+                                  </div>
+                                )
+                              })
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-            <div className="form-group">
-              <label>Ngày</label>
-              <input type="date" value={txDate} onChange={e => setTxDate(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Ghi chú</label>
-              <input type="text" placeholder="Tùy chọn..." value={note} onChange={e => setNote(e.target.value)} />
-            </div>
+                <div className="form-group">
+                  <label>Ngày</label>
+                  <input type="date" value={txDate} onChange={e => setTxDate(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label>Ghi chú</label>
+                  <input type="text" placeholder="Tùy chọn..." value={note} onChange={e => setNote(e.target.value)} />
+                </div>
 
-            <button className="btn-submit" disabled={submitting} onClick={handleSubmit}>
-              {submitting ? 'Đang lưu...' : 'Lưu giao dịch'}
-            </button>
+                <button className="btn-submit" disabled={submitting} onClick={handleSubmit}>
+                  {submitting ? 'Đang lưu...' : 'Lưu giao dịch'}
+                </button>
+              </>
+            )}
           </div>
 
           </div>
@@ -535,7 +543,23 @@ export default function DashboardPage() {
           <div className="card">
             <div className="card-title">Phân tích 50 / 30 / 20</div>
             {totalIncome === 0 || !hasGroupData
-              ? <div className="monthly-empty">Cần có thu nhập + danh mục được gắn nhóm (needs/wants/savings) để phân tích</div>
+              ? (
+                <div style={{ padding: '16px', background: 'var(--surface2)', borderRadius: '10px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginBottom: 8 }}>
+                    {totalIncome === 0 ? 'Cần có thu nhập để phân tích' : 'Chưa gán danh mục'}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--muted)', fontFamily: 'var(--font-mono)', lineHeight: '1.4', marginBottom: 10 }}>
+                    Gán nhóm (Thiết yếu/Muốn có/Tiết kiệm) cho danh mục chi tiêu để bắt đầu phân tích
+                  </div>
+                  <button 
+                    className="btn-small"
+                    onClick={() => setFormExpanded(true)}
+                    style={{ fontSize: '0.68rem' }}
+                  >
+                    → Cài đặt danh mục
+                  </button>
+                </div>
+              )
               : (Object.entries(GROUP_CONFIG) as [Group, typeof GROUP_CONFIG[Group]][]).map(([g, cfg]) => {
                   const spent    = groupAmounts[g]
                   const ideal    = cfg.ideal * totalIncome
@@ -601,12 +625,11 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {([
-                { label: 'Thu nhập', cur: totalIncome, diff: incomeDiff, pos: true },
-                { label: 'Chi tiêu', cur: totalExpenseAbs, diff: expenseDiff, pos: false },
+                { label: 'Thu nhập', cur: totalIncome, diff: incomeDiff },
+                { label: 'Chi tiêu', cur: totalExpenseAbs, diff: expenseDiff },
               ] as const).map(item => {
                 const arrow = item.diff === null ? '' : item.diff > 0 ? '↑' : item.diff < 0 ? '↓' : '='
-                const good  = item.pos ? (item.diff ?? 0) >= 0 : (item.diff ?? 0) <= 0
-                const color = item.diff === null ? 'var(--muted)' : good ? 'var(--income)' : 'var(--expense)'
+                const color = item.diff === null ? 'var(--muted)' : (item.diff ?? 0) > 0 ? 'var(--income)' : (item.diff ?? 0) < 0 ? 'var(--expense)' : 'var(--muted)'
                 return (
                   <div key={item.label} style={{ background: 'var(--surface2)', borderRadius: 10, padding: '12px 14px' }}>
                     <div style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{item.label}</div>
