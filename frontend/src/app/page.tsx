@@ -316,20 +316,33 @@ export default function DashboardPage() {
     <>
       <header>
         <div className="logo">FMRS<span>/</span>ai</div>
-        <div className="month-nav">
-          <button onClick={prevMonth}>←</button>
-          <span id="month-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', minWidth: 88, textAlign: 'center' }}>{monthLabel}</span>
-          <button onClick={nextMonth}>→</button>
-          <button
-            onClick={() => { const n = new Date(); setMonth(n.getMonth() + 1); setYear(n.getFullYear()) }}
-            style={{ fontSize: '0.65rem', padding: '0 10px', fontFamily: 'var(--font-mono)', color: 'var(--accent)', borderColor: 'rgba(200,241,53,0.3)', width: 'auto' }}
-          >Tháng này</button>
+        <div className="auth-header-nav" style={{ display: 'flex', gap: '8px' }}>
+          {session ? (
+            <button className="btn-small" onClick={async () => { await supabase.auth.signOut(); setSession(null); window.location.reload() }}>Đăng xuất</button>
+          ) : (
+            <>
+              <button className="btn-small" style={{ background: 'var(--accent)', color: '#000', border: 'none', fontWeight: 600 }} onClick={() => window.location.href = '/login'}>Đăng nhập</button>
+              <button className="btn-small" onClick={() => window.location.href = '/login?tab=register'}>Đăng ký</button>
+            </>
+          )}
         </div>
       </header>
 
       <div className="container">
         {/* ── SIDEBAR ── */}
         <div className="sidebar">
+
+          {/* Month Nav */}
+          <div className="month-nav" style={{ padding: '14px 18px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <button onClick={prevMonth}>←</button>
+            <span id="month-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: 90, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>{monthLabel}</span>
+            <button onClick={nextMonth}>→</button>
+            <div style={{ flex: 1 }} />
+            <button
+              onClick={() => { const n = new Date(); setMonth(n.getMonth() + 1); setYear(n.getFullYear()) }}
+              style={{ fontSize: '0.7rem', padding: '0 12px', fontFamily: 'var(--font-mono)', color: 'var(--accent)', borderColor: 'rgba(200,241,53,0.3)', width: 'auto' }}
+            >Tháng này</button>
+          </div>
 
           {/* Summary */}
           <div className="card">

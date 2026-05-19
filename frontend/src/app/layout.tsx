@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "FMRS – Financial Management Recommendation System",
-  description: "Hệ thống quản lý và gợi ý tài chính cá nhân theo quy tắc 50/30/20",
+  description: "Hệ thống quản lý và gợi ý tài chính cá nhân",
 };
 
 export default function RootLayout({
