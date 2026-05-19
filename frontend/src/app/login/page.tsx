@@ -78,8 +78,7 @@ export default function LandingAndAuthPage() {
             
             <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', color: '#ffffff' }}>
               Quản lý tài chính <br />
-              <span className="gradient-text">thông minh</span> <br />
-              với quy tắc 50/30/20
+              <span className="gradient-text">thông minh</span>
             </h1>
             
             <p style={{ fontSize: '1.2rem', color: 'var(--muted)', lineHeight: 1.6, marginTop: 20, maxWidth: 500 }}>
