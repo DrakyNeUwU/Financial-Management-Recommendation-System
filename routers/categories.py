@@ -1,8 +1,9 @@
 # routers/categories.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from database import supabase
+from auth import get_current_user
 
 router = APIRouter()
 
@@ -12,12 +13,12 @@ class CategoryCreate(BaseModel):
     group_50_30_20: Optional[str] = None  # 'needs', 'wants', 'savings'
 
 @router.get("")
-def get_categories():
+def get_categories(user = Depends(get_current_user)):
     result = supabase.table("categories").select("*").order("name").execute()
     return result.data
 
 @router.post("")
-def create_category(category: CategoryCreate):
+def create_category(category: CategoryCreate, user = Depends(get_current_user)):
     if category.type not in ("income", "expense"):
         raise HTTPException(status_code=400, detail="type phải là 'income' hoặc 'expense'")
     if category.group_50_30_20 and category.group_50_30_20 not in ("needs", "wants", "savings"):
@@ -32,7 +33,7 @@ def create_category(category: CategoryCreate):
 
 
 @router.delete("/{category_id}")
-def delete_category(category_id: str):
+def delete_category(category_id: str, user = Depends(get_current_user)):
     usage = (
         supabase.table("transactions")
         .select("id")
@@ -62,4 +63,4 @@ def update_category(category_id: str, body: CategoryUpdate):
     }).eq("id", category_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Không tìm thấy danh mục")
-    return result.data[0]
+    return result.data[0]

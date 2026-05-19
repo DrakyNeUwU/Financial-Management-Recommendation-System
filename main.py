@@ -14,8 +14,8 @@ app.add_middleware(
         "https://financial-management-recommendation.vercel.app"
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 app.include_router(transactions.router, prefix="/transactions")
 app.include_router(categories.router, prefix="/categories")
@@ -28,9 +28,15 @@ import traceback
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
+    # Log error on server (production: log to file/service)
+    import sys
+    print(f"Server Error: {exc}", file=sys.stderr)
+    print(traceback.format_exc(), file=sys.stderr)
+    
+    # Return safe error message (no trace leak)
     return JSONResponse(
         status_code=500,
-        content={"message": "Internal Server Error", "detail": str(exc), "trace": traceback.format_exc()},
+        content={"message": "Internal Server Error"},
         headers={
             "Access-Control-Allow-Origin": "https://financial-management-recommendation.vercel.app",
             "Access-Control-Allow-Credentials": "true"
