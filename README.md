@@ -339,7 +339,15 @@ irm "http://localhost:8000/transactions" -Method POST `
 
 ---
 
-## 🚢 Deployment
+## � Bug Fixes & Improvements (v1.2.1)
+
+✅ **Month Comparison Logic** — Fix bug khi đảo ngược tháng so sánh không hiển thị dữ liệu  
+✅ **Negative Balance Display** — Hiển thị `~0đ/ngày` khi số dư dự kiến là âm  
+✅ **PostHog Analytics** — Tích hợp tracking analytics để monitor user behavior  
+
+---
+
+## �🚢 Deployment
 
 ### Frontend (Vercel)
 1. Push code lên GitHub

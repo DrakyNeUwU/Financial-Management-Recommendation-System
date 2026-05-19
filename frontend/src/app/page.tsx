@@ -676,7 +676,7 @@ export default function DashboardPage() {
                     {totalIncome > 0 ? fmt(projectedBalance) : '—'}
                   </div>
                   <div style={{ fontSize: '0.65rem', color: 'var(--muted)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
-                    ~{fmt(avgPerDay)} / ngày
+                    {projectedBalance >= 0 ? `~${fmt(avgPerDay)} / ngày` : '~0đ / ngày'}
                   </div>
                 </div>
               </div>
