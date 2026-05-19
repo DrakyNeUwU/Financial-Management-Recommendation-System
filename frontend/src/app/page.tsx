@@ -334,75 +334,93 @@ export default function DashboardPage() {
 
   return (
     <>
-      <header>
-        <div className="logo">FMRS<span>/</span>ai</div>
-        <div className="auth-header-nav" style={{ display: 'flex', gap: '8px' }}>
-          {session ? (
-            <button className="btn-small" onClick={async () => { await supabase.auth.signOut(); setSession(null); window.location.reload() }}>Đăng xuất</button>
-          ) : (
-            <>
-              <button className="btn-small" style={{ background: 'var(--accent)', color: '#000', border: 'none', fontWeight: 600 }} onClick={() => window.location.href = '/login'}>Đăng nhập</button>
-              <button className="btn-small" onClick={() => window.location.href = '/login?tab=register'}>Đăng ký</button>
-            </>
-          )}
-        </div>
-      </header>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', background: 'var(--surface)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 100 }}>
+  <div className="logo" style={{ flex: '0 0 auto' }}>FMRS<span>/</span>ai</div>
+  
+  <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flex: '1 1 auto', justifyContent: 'center' }}>
+    <div className="month-nav" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 12px', borderRadius: '12px', background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+      <button onClick={prevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', padding: '0 6px' }}>←</button>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span id="month-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: 110, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>
+          Tháng {monthLabel}
+        </span>
+        <input 
+          type="month"
+          value={`${year}-${String(month).padStart(2, '0')}`}
+          onChange={e => {
+            if (!e.target.value) return
+            const [y, m] = e.target.value.split('-')
+            if (y && m) { setYear(parseInt(y)); setMonth(parseInt(m)) }
+          }}
+          onClick={e => (e.target as HTMLInputElement).showPicker?.()}
+          style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
+        />
+      </div>
+      <button onClick={nextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', padding: '0 6px' }}>→</button>
+    </div>
+
+    <div style={{ display: 'flex', gap: '24px', fontSize: '0.9rem', fontFamily: 'var(--font-mono)', fontWeight: 500 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: 'var(--muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Thu:</span> <span style={{ color: 'var(--income)' }}>{fmtShort(totalIncome)}</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: 'var(--muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Chi:</span> <span style={{ color: 'var(--expense)' }}>{fmtShort(totalExpense)}</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: 'var(--muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Còn:</span> <span style={{ color: 'var(--text)' }}>{fmtShort(balance)}</span></div>
+    </div>
+  </div>
+
+  <div className="auth-header-nav" style={{ display: 'flex', gap: '8px', flex: '0 0 auto' }}>
+    {session ? (
+      <button className="btn-small" onClick={async () => { await supabase.auth.signOut(); setSession(null); window.location.reload() }}>Đăng xuất</button>
+    ) : (
+      <>
+        <button className="btn-small" style={{ background: 'var(--accent)', color: '#000', border: 'none', fontWeight: 600 }} onClick={() => window.location.href = '/login'}>Đăng nhập</button>
+        <button className="btn-small" onClick={() => window.location.href = '/login?tab=register'}>Đăng ký</button>
+      </>
+    )}
+  </div>
+</header>
 
       <div className="container">
         {/* ── SIDEBAR ── */}
         <div className="sidebar">
 
-          {/* Month Nav */}
-          <div className="month-nav" style={{ padding: '14px 18px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <button onClick={prevMonth}>←</button>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span id="month-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: 110, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>
-                Tháng {monthLabel}
-              </span>
-              <input 
-                type="month"
-                value={`${year}-${String(month).padStart(2, '0')}`}
-                onChange={e => {
-                  if (!e.target.value) return
-                  const [y, m] = e.target.value.split('-')
-                  if (y && m) { setYear(parseInt(y)); setMonth(parseInt(m)) }
-                }}
-                onClick={e => (e.target as HTMLInputElement).showPicker?.()}
-                style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-              />
-            </div>
-            <button onClick={nextMonth}>→</button>
-            <div style={{ flex: 1 }} />
-            <button
-              onClick={() => { const n = new Date(); setMonth(n.getMonth() + 1); setYear(n.getFullYear()) }}
-              style={{ fontSize: '0.7rem', padding: '0 12px', fontFamily: 'var(--font-mono)', color: 'var(--accent)', borderColor: 'rgba(200,241,53,0.3)', width: 'auto' }}
-            >Tháng này</button>
-          </div>
-
-          {/* Summary */}
-          <div className="card">
-            <div className="card-title">Tổng quan tháng</div>
-            <div className="summary-grid">
-              <div className="summary-item income">
-                <div className="label">Thu nhập</div>
-                <div className="amount">{loading ? '—' : fmt(totalIncome)}</div>
+          
+          {/* Monthly Breakdown */}
+          <div className="card monthly-card">
+            <div className="card-title">Biến động theo tháng</div>
+            <div className="monthly-header">
+              <div className="monthly-donut">
+                <Doughnut data={donutData} options={donutOptions as Parameters<typeof Doughnut>[0]['options']} />
               </div>
-              <div className="summary-item expense">
-                <div className="label">Chi tiêu</div>
+              <div className="monthly-total">
+                <div className="eyebrow">Chi tiêu tháng này</div>
                 <div className="amount">{loading ? '—' : fmt(totalExpense)}</div>
+                <div className="subtext">{loading ? '—' : totalExpenseAbs > 0 ? `~${fmt(avgPerDay)} / ngày` : '—'}</div>
+                {!loading && expenseDiff !== null && (
+                  <div style={{ fontSize: '0.75rem', marginTop: 4, fontFamily: 'var(--font-mono)', color: expenseDiff > 0 ? 'var(--expense)' : expenseDiff < 0 ? 'var(--income)' : 'var(--muted)' }}>
+                    {expenseDiff > 0 ? '↑' : expenseDiff < 0 ? '↓' : '='} {Math.abs(expenseDiff).toFixed(1)}% so tháng trước
+                  </div>
+                )}
               </div>
             </div>
-            <div className="balance-row">
-              <span className="label">Còn lại</span>
-              <span className="amount" style={{ color: balance >= 0 ? 'var(--income)' : 'var(--expense)' }}>
-                {loading ? '—' : fmt(balance)}
-              </span>
+            <div className="monthly-list">
+              {loading
+                ? <div className="loading">đang tải...</div>
+                : breakdownItems.length === 0
+                  ? <div className="monthly-empty">Chưa có dữ liệu chi tiêu trong tháng này</div>
+                  : breakdownItems.map((item, idx) => {
+                      const pct = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0
+                      return (
+                        <div key={item.name} className="monthly-item">
+                          <span className="dot" style={{ background: PALETTE[idx % PALETTE.length] }} />
+                          <div className="name">{item.name}</div>
+                          <div className="meta">
+                            <span className="percent">{pct.toFixed(1)}%</span>
+                            <span className="value">{fmt(item.amount)}</span>
+                          </div>
+                        </div>
+                      )
+                    })
+              }
             </div>
-            {!loading && txs.length === 0 && (
-              <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: 'rgba(200,241,53,0.06)', border: '1px solid rgba(200,241,53,0.15)', fontSize: '0.75rem', color: 'var(--accent)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>
-                Bắt đầu bằng cách thêm giao dịch đầu tiên ↓
-              </div>
-            )}
           </div>
 
           {/* Add Transaction Form */}
@@ -508,103 +526,11 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Day Table */}
-          <div className="card">
-            <div className="card-title">Giao dịch theo ngày — click để xem chi tiết</div>
-            <div className="day-table-header">
-              <span>Ngày</span><span>Thu nhập</span><span>Chi tiêu</span>
-            </div>
-            <div className="day-list">
-              {loading ? <div className="loading">đang tải...</div> : dayRows.map(d => {
-                const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-                const dayTxs = txByDay[ds] || []
-                const inc = dayTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-                const exp = dayTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-                const isEmpty = dayTxs.length === 0
-                const isToday = ds === todayStr
-                const dayLabel = `${String(d).padStart(2,'0')}/${String(month).padStart(2,'0')}`
-                const open = openDays.has(ds)
-                return (
-                  <div key={ds}>
-                    <div className="day-row-header" onClick={() => toggleDay(ds)}>
-                      <div className={`day-date${isToday ? ' today' : isEmpty ? ' empty' : ''}`}>
-                        {dayLabel}{isToday ? ' ●' : ''}
-                      </div>
-                      <div className={inc > 0 ? 'day-income' : 'day-zero'}>{inc > 0 ? '+' + fmtShort(inc) : '—'}</div>
-                      <div className={exp > 0 ? 'day-expense' : 'day-zero'}>{exp > 0 ? '−' + fmtShort(exp) : '—'}</div>
-                    </div>
-                    <div className={`tx-details${open ? ' open' : ''}`}>
-                      {dayTxs.length === 0
-                        ? <div style={{ fontSize: '0.72rem', color: 'var(--muted)', padding: '4px 0', fontFamily: 'var(--font-mono)' }}>Không có giao dịch</div>
-                        : dayTxs.map(tx => (
-                            <div key={tx.id} className="tx-detail-item">
-                              <div className={`tx-detail-dot ${tx.type}`} />
-                              <div className="tx-detail-cat">
-                                {getCatName(tx.category_id)}
-                                {tx.note && <span className="tx-detail-note">— {tx.note}</span>}
-                              </div>
-                              <div className="tx-detail-actions">
-                                <div className={`tx-detail-amount ${tx.type}`}>
-                                  {tx.type === 'income' ? '+' : '−'}{fmt(tx.amount)}
-                                </div>
-                                <button className="btn-delete-tx" title="Xoá giao dịch"
-                                  onClick={() => handleDeleteTx(tx.id)}>×</button>
-                              </div>
-                            </div>
-                          ))
-                      }
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
           </div>
-
-        </div>
-
         {/* ── RIGHT COLUMN ── */}
         <div className="right-column">
 
-          {/* Monthly Breakdown */}
-          <div className="card monthly-card">
-            <div className="card-title">Biến động theo tháng</div>
-            <div className="monthly-header">
-              <div className="monthly-donut">
-                <Doughnut data={donutData} options={donutOptions as Parameters<typeof Doughnut>[0]['options']} />
-              </div>
-              <div className="monthly-total">
-                <div className="eyebrow">Chi tiêu tháng này</div>
-                <div className="amount">{loading ? '—' : fmt(totalExpense)}</div>
-                <div className="subtext">{loading ? '—' : totalExpenseAbs > 0 ? `~${fmt(avgPerDay)} / ngày` : '—'}</div>
-                {!loading && expenseDiff !== null && (
-                  <div style={{ fontSize: '0.75rem', marginTop: 4, fontFamily: 'var(--font-mono)', color: expenseDiff > 0 ? 'var(--expense)' : expenseDiff < 0 ? 'var(--income)' : 'var(--muted)' }}>
-                    {expenseDiff > 0 ? '↑' : expenseDiff < 0 ? '↓' : '='} {Math.abs(expenseDiff).toFixed(1)}% so tháng trước
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="monthly-list">
-              {loading
-                ? <div className="loading">đang tải...</div>
-                : breakdownItems.length === 0
-                  ? <div className="monthly-empty">Chưa có dữ liệu chi tiêu trong tháng này</div>
-                  : breakdownItems.map((item, idx) => {
-                      const pct = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0
-                      return (
-                        <div key={item.name} className="monthly-item">
-                          <span className="dot" style={{ background: PALETTE[idx % PALETTE.length] }} />
-                          <div className="name">{item.name}</div>
-                          <div className="meta">
-                            <span className="percent">{pct.toFixed(1)}%</span>
-                            <span className="value">{fmt(item.amount)}</span>
-                          </div>
-                        </div>
-                      )
-                    })
-              }
-            </div>
-          </div>
-
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           {/* 50/30/20 Analysis */}
           <div className="card">
             <div className="card-title">Phân tích 50 / 30 / 20</div>
@@ -692,6 +618,8 @@ export default function DashboardPage() {
                 )
               })}
             </div>
+          </div>
+
           </div>
 
           {/* Forecast */}
