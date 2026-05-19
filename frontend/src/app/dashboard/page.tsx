@@ -395,7 +395,7 @@ export default function DashboardPage() {
                       onKeyDown={e => e.key === 'Enter' && handleAddCategory()} />
                     <button className="btn-small" onClick={handleAddCategory}>+ Thêm</button>
                   </div>
-                  <div className="category-panel" style={{ marginTop: 0, border: 'none', padding: 0, background: 'transparent' }}>
+                  <div className="category-panel" style={{ display: 'block', marginTop: 0, border: 'none', padding: 0, background: 'transparent' }}>
                     <div className="category-panel-head" style={{ fontSize: '0.75rem', paddingBottom: 8 }}>Danh mục hiện có ({filteredCats.length})</div>
                     <div className="category-list" style={{ maxHeight: 200, overflowY: 'auto', paddingRight: 4 }}>
                       {filteredCats.length === 0
