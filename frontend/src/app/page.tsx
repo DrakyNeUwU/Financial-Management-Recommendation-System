@@ -53,6 +53,7 @@ export default function DashboardPage() {
 
   // FMRS: previous month data + budget targets
   const [prevTxs, setPrevTxs] = useState<Transaction[]>([])
+  const [compMonthStr, setCompMonthStr] = useState<string>('')
   const [budgets, setBudgets] = useState<Record<string, number>>(() => {
     if (typeof window === 'undefined') return {}
     try { return JSON.parse(localStorage.getItem('fmrs-budgets') || '{}') } catch { return {} }
@@ -101,10 +102,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const prevM = month === 1 ? 12 : month - 1
     const prevY = month === 1 ? year - 1 : year
-    const prevParam = `${String(prevM).padStart(2,'0')}-${prevY}`
-    getTransactions(prevParam).then(setPrevTxs).catch(() => setPrevTxs([]))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setCompMonthStr(`${prevY}-${String(prevM).padStart(2, '0')}`)
   }, [month, year])
+
+  useEffect(() => {
+    if (!compMonthStr) return
+    const [y, m] = compMonthStr.split('-')
+    if (y && m) getTransactions(`${m}-${y}`).then(setPrevTxs).catch(() => setPrevTxs([]))
+  }, [compMonthStr])
 
   // Save budgets to localStorage
   const saveBudget = (catId: string, value: string) => {
@@ -335,7 +340,16 @@ export default function DashboardPage() {
           {/* Month Nav */}
           <div className="month-nav" style={{ padding: '14px 18px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <button onClick={prevMonth}>←</button>
-            <span id="month-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: 90, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>{monthLabel}</span>
+            <input 
+              type="month"
+              value={`${year}-${String(month).padStart(2, '0')}`}
+              onChange={e => {
+                if (!e.target.value) return
+                const [y, m] = e.target.value.split('-')
+                if (y && m) { setYear(parseInt(y)); setMonth(parseInt(m)) }
+              }}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: 130, textAlign: 'center', fontWeight: 600, color: 'var(--text)', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer' }}
+            />
             <button onClick={nextMonth}>→</button>
             <div style={{ flex: 1 }} />
             <button
@@ -606,7 +620,15 @@ export default function DashboardPage() {
 
           {/* Month Comparison */}
           <div className="card">
-            <div className="card-title">So sánh tháng trước</div>
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+              <span style={{ letterSpacing: '0.05em' }}>SO SÁNH THÁNG {String(month).padStart(2, '0')}/{year} VÀ</span>
+              <input 
+                type="month" 
+                value={compMonthStr} 
+                onChange={e => { if(e.target.value) setCompMonthStr(e.target.value) }} 
+                style={{ fontSize: '0.7rem', padding: '2px 4px', background: 'var(--surface2)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 4, fontFamily: 'var(--font-mono)', outline: 'none', cursor: 'pointer', letterSpacing: 'normal' }} 
+              />
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {([
                 { label: 'Thu nhập', cur: totalIncome, diff: incomeDiff, pos: true },
@@ -620,7 +642,7 @@ export default function DashboardPage() {
                     <div style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{item.label}</div>
                     <div style={{ fontSize: '0.9rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--text)' }}>{fmt(item.cur)}</div>
                     <div style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color, marginTop: 4 }}>
-                      {arrow} {item.diff !== null ? `${Math.abs(item.diff).toFixed(1)}% so tháng trước` : 'Chưa có dữ liệu tháng trước'}
+                      {arrow} {item.diff !== null ? `${Math.abs(item.diff).toFixed(1)}% so với tháng chọn` : 'Chưa có dữ liệu'}
                     </div>
                   </div>
                 )
