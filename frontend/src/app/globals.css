@@ -346,3 +346,83 @@ select option { background: var(--surface2); }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── AUTH TOAST GUARD ───────────────────────────────── */
+.auth-toast-card {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.auth-toast-card.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.auth-toast-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  padding-right: 16px;
+}
+.auth-toast-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.auth-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+.auth-btn.login {
+  background: var(--accent);
+  color: #000;
+}
+.auth-btn.login:hover {
+  opacity: 0.88;
+}
+.auth-btn.register {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.auth-btn.register:hover {
+  border-color: var(--muted);
+}
+.auth-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.auth-close:hover {
+  color: var(--text);
+}

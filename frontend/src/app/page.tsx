@@ -141,7 +141,7 @@ export default function LandingAndAuthPage() {
                 <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--muted)', marginBottom: 8, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Email của bạn
                 </label>
-                <input type="email" className="input-field" placeholder="you@example.com"
+                <input type="email" className="input-field" placeholder="example@gmail.com"
                   value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
 

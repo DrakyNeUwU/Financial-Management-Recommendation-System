@@ -33,6 +33,8 @@ export default function DashboardPage() {
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
   const [txs, setTxs] = useState<Transaction[]>([])
+  const [session, setSession] = useState<any>(null)
+  const [showAuthToast, setShowAuthToast] = useState(false)
   const [categories, setCats] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [openDays, setOpenDays] = useState<Set<string>>(new Set())
@@ -81,11 +83,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) { window.location.href = '/'; return }
+      setSession(data.session)
     })
     loadAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, year])
+
+  const checkAuth = () => {
+    if (!session) {
+      setShowAuthToast(true)
+      return false
+    }
+    return true
+  }
 
   // Fetch previous month for comparison
   useEffect(() => {
@@ -107,10 +117,11 @@ export default function DashboardPage() {
   }
 
   // ── type toggle ──────────────────────────────────────────
-  const handleSetType = (t: TxType) => { setType(t); setCategoryId('') }
+  const handleSetType = (t: TxType) => { if (!checkAuth()) return; setType(t); setCategoryId('') }
 
   // ── submit transaction ──────────────────────────────────
   const handleSubmit = async () => {
+    if (!checkAuth()) return
     const amount = evalAmount(amountRaw) ?? parseFloat(amountRaw)
     if (!amount || amount <= 0) return showToast('Nhập số tiền hợp lệ', 'error')
     if (!categoryId) return showToast('Chọn danh mục', 'error')
@@ -128,6 +139,7 @@ export default function DashboardPage() {
 
   // ── add category ─────────────────────────────────────────
   const handleAddCategory = async () => {
+    if (!checkAuth()) return
     if (!newCatName.trim()) return
     const { data: session } = await supabase.auth.getSession()
     const token = session.session?.access_token
@@ -148,6 +160,7 @@ export default function DashboardPage() {
 
   // ── delete category ──────────────────────────────────────
   const handleDeleteCategory = async (id: string, name: string) => {
+    if (!checkAuth()) return
     if (!confirm(`Xoá danh mục "${name}"?`)) return
     const { data: session } = await supabase.auth.getSession()
     const token = session.session?.access_token
@@ -168,6 +181,7 @@ export default function DashboardPage() {
 
   // ── assign group 50/30/20 ────────────────────────────────
   const handleSetGroup = async (id: string, group: Group503020 | null) => {
+    if (!checkAuth()) return
     try {
       await updateCategoryGroup(id, group)
       const cats = await getCategories()
@@ -180,6 +194,7 @@ export default function DashboardPage() {
 
   // ── delete transaction ───────────────────────────────────
   const handleDeleteTx = async (id: string) => {
+    if (!checkAuth()) return
     if (!confirm('Xoá giao dịch này?')) return
     try {
       await deleteTransaction(id)
@@ -359,11 +374,74 @@ export default function DashboardPage() {
 
             <div className="form-group">
               <label>Danh mục</label>
-              <select value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-                <option value="">-- Chọn danh mục --</option>
-                {filteredCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              {filteredCats.length === 0 && <div className="category-type-hint">Chưa có danh mục — thêm bên dưới</div>}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select style={{ flex: 1 }} value={categoryId} onChange={e => { if (!checkAuth()) return; setCategoryId(e.target.value) }}>
+                  <option value="">-- Chọn danh mục --</option>
+                  {filteredCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button type="button" className="btn-small" onClick={() => { if (!checkAuth()) return; setCatPanelOpen(v => !v) }} title="Quản lý danh mục" style={{ width: '42px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                  {catPanelOpen ? '−' : '+'}
+                </button>
+              </div>
+              {filteredCats.length === 0 && <div className="category-type-hint">Chưa có danh mục — hãy thêm ngay</div>}
+              
+              {/* Inline Category Management */}
+              {catPanelOpen && (
+                <div style={{ marginTop: 12, padding: 12, background: 'var(--surface2)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ fontSize: '0.75rem', marginBottom: 10, fontFamily: 'var(--font-mono)', color: 'var(--muted)', letterSpacing: '0.05em' }}>QUẢN LÝ DANH MỤC</div>
+                  <div className="add-category-row" style={{ marginBottom: 12 }}>
+                    <input type="text" placeholder="Tên danh mục mới..." value={newCatName}
+                      onChange={e => setNewCatName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddCategory()} />
+                    <button className="btn-small" onClick={handleAddCategory}>+ Thêm</button>
+                  </div>
+                  <div className="category-panel" style={{ marginTop: 0, border: 'none', padding: 0, background: 'transparent' }}>
+                    <div className="category-panel-head" style={{ fontSize: '0.75rem', paddingBottom: 8 }}>Danh mục hiện có ({filteredCats.length})</div>
+                    <div className="category-list" style={{ maxHeight: 200, overflowY: 'auto', paddingRight: 4 }}>
+                      {filteredCats.length === 0
+                        ? <div className="category-empty">Chưa có danh mục cho loại này</div>
+                        : filteredCats.map(c => {
+                            const GROUP_OPTIONS: { value: Group503020 | '', label: string, color: string }[] = [
+                              { value: '',        label: '— Chưa phân loại', color: 'var(--muted)' },
+                              { value: 'needs',   label: '🏠 Thiết yếu',     color: '#5b8dee' },
+                              { value: 'wants',   label: '🎯 Muốn có',        color: '#c8f135' },
+                              { value: 'savings', label: '💰 Tiết kiệm',      color: '#a29bfe' },
+                            ]
+                            const current = c.group_50_30_20 ?? ''
+                            const opt = GROUP_OPTIONS.find(o => o.value === current)
+                            return (
+                              <div key={c.id} style={{ background: 'var(--surface)', borderRadius: 8, padding: '8px 10px', marginBottom: 8, border: '1px solid rgba(255,255,255,0.03)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: c.type === 'expense' ? 8 : 0 }}>
+                                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: opt?.color ?? 'var(--border)', flexShrink: 0, display: 'inline-block' }} />
+                                  <div style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                                  <button className="btn-delete-category" title="Xoá danh mục"
+                                    onClick={() => handleDeleteCategory(c.id, c.name)}>×</button>
+                                </div>
+                                {c.type === 'expense' && (
+                                  <select
+                                    value={current}
+                                    onChange={e => handleSetGroup(c.id, (e.target.value as Group503020) || null)}
+                                    style={{
+                                      width: '100%', fontSize: '0.72rem', padding: '4px 6px',
+                                      borderRadius: 6, background: 'var(--surface2)',
+                                      border: `1px solid ${opt?.color ?? 'var(--border)'}`,
+                                      color: opt?.color ?? 'var(--muted)',
+                                      fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                                    }}
+                                  >
+                                    {GROUP_OPTIONS.map(o => (
+                                      <option key={o.value} value={o.value} style={{ color: 'var(--text)' }}>{o.label}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                            )
+                          })
+                      }
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
 
@@ -433,71 +511,7 @@ export default function DashboardPage() {
               })}
             </div>
           </div>
-          {/* Category Management — separate card */}
-          <div className="card">
-            <div className="card-title">Quản lý danh mục</div>
-            <div className="type-toggle" style={{ marginBottom: 10 }}>
-              <div className={`type-btn${type === 'expense' ? ' active-expense' : ''}`} onClick={() => handleSetType('expense')}>Chi tiêu</div>
-              <div className={`type-btn${type === 'income' ? ' active-income' : ''}`} onClick={() => handleSetType('income')}>Thu nhập</div>
-            </div>
-            <div className="add-category-row" style={{ marginBottom: 10 }}>
-              <input type="text" placeholder="Tên danh mục mới..." value={newCatName}
-                onChange={e => setNewCatName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleAddCategory()} />
-              <button className="btn-small" onClick={handleAddCategory}>+ Thêm</button>
-            </div>
-            <div className={`category-manage${catPanelOpen ? ' open' : ''}`}>
-              <button type="button" className="category-manage-toggle" onClick={() => setCatPanelOpen(v => !v)}>
-                <span className="tog-label">Xem danh mục hiện có</span>
-                <span className="category-count">{filteredCats.length}</span>
-              </button>
-              <div className="category-panel">
-                <div className="category-panel-head">Danh mục hiện có</div>
-                <div className="category-list">
-                  {filteredCats.length === 0
-                    ? <div className="category-empty">Chưa có danh mục cho loại này</div>
-                    : filteredCats.map(c => {
-                        const GROUP_OPTIONS: { value: Group503020 | '', label: string, color: string }[] = [
-                          { value: '',        label: '— Chưa phân loại', color: 'var(--muted)' },
-                          { value: 'needs',   label: '🏠 Thiết yếu',     color: '#5b8dee' },
-                          { value: 'wants',   label: '🎯 Muốn có',        color: '#c8f135' },
-                          { value: 'savings', label: '💰 Tiết kiệm',      color: '#a29bfe' },
-                        ]
-                        const current = c.group_50_30_20 ?? ''
-                        const opt = GROUP_OPTIONS.find(o => o.value === current)
-                        return (
-                          <div key={c.id} style={{ background: 'var(--surface2)', borderRadius: 10, padding: '10px 11px', marginBottom: 8, border: '1px solid rgba(255,255,255,0.03)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: c.type === 'expense' ? 8 : 0 }}>
-                              <span style={{ width: 10, height: 10, borderRadius: '50%', background: opt?.color ?? 'var(--border)', flexShrink: 0, display: 'inline-block' }} />
-                              <div style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                              <button className="btn-delete-category" title="Xoá danh mục"
-                                onClick={() => handleDeleteCategory(c.id, c.name)}>×</button>
-                            </div>
-                            {c.type === 'expense' && (
-                              <select
-                                value={current}
-                                onChange={e => handleSetGroup(c.id, (e.target.value as Group503020) || null)}
-                                style={{
-                                  width: '100%', fontSize: '0.72rem', padding: '5px 8px',
-                                  borderRadius: 6, background: 'var(--surface)',
-                                  border: `1px solid ${opt?.color ?? 'var(--border)'}`,
-                                  color: opt?.color ?? 'var(--muted)',
-                                  fontFamily: 'var(--font-mono)', cursor: 'pointer',
-                                }}
-                              >
-                                {GROUP_OPTIONS.map(o => (
-                                  <option key={o.value} value={o.value} style={{ color: 'var(--text)' }}>{o.label}</option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                        )
-                      })
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
 
         {/* ── RIGHT COLUMN ── */}
@@ -514,6 +528,11 @@ export default function DashboardPage() {
                 <div className="eyebrow">Chi tiêu tháng này</div>
                 <div className="amount">{loading ? '—' : fmt(totalExpense)}</div>
                 <div className="subtext">{loading ? '—' : totalExpenseAbs > 0 ? `~${fmt(avgPerDay)} / ngày` : '—'}</div>
+                {!loading && expenseDiff !== null && (
+                  <div style={{ fontSize: '0.75rem', marginTop: 4, fontFamily: 'var(--font-mono)', color: expenseDiff > 0 ? 'var(--expense)' : expenseDiff < 0 ? 'var(--income)' : 'var(--muted)' }}>
+                    {expenseDiff > 0 ? '↑' : expenseDiff < 0 ? '↓' : '='} {Math.abs(expenseDiff).toFixed(1)}% so tháng trước
+                  </div>
+                )}
               </div>
             </div>
             <div className="monthly-list">
@@ -655,6 +674,18 @@ export default function DashboardPage() {
 
       {/* Toast */}
       <div className={`toast${toast.show ? ' show' : ''} ${toast.type}`}>{toast.msg}</div>
+
+      {/* Auth Toast */}
+      <div className={`auth-toast-card${showAuthToast ? ' show' : ''}`}>
+        <div className="auth-toast-header">
+          <span>🔒</span> Vui lòng đăng nhập để tiếp tục
+        </div>
+        <div className="auth-toast-actions">
+          <button className="auth-btn login" onClick={() => window.location.href = '/'}>Đăng nhập</button>
+          <button className="auth-btn register" onClick={() => window.location.href = '/?tab=register'}>Đăng ký</button>
+        </div>
+        <button className="auth-close" onClick={() => setShowAuthToast(false)}>&times;</button>
+      </div>
     </>
   )
 }
