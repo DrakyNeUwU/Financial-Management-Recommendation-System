@@ -1,163 +1,206 @@
-# Financial Management Recommendation System (FMRS)
+# 💰 Financial Management Recommendation System (FMRS)
 
-Ứng dụng theo dõi và phân tích tài chính cá nhân. Ghi chép thu chi, xem biến động theo ngày, phân loại danh mục theo quy tắc 50/30/20, và nhận gợi ý tài chính thông minh.
+Ứng dụng theo dõi và phân tích tài chính cá nhân được xây dựng với **Next.js** + **FastAPI** + **Supabase**. Ghi chép thu chi, xem biến động theo ngày, phân loại danh mục theo quy tắc **50/30/20**, và nhận gợi ý tài chính thông minh.
 
-## Tech Stack
+## ✨ Tính năng chính
 
-| Layer | Công nghệ |
-|-------|-----------|
-| **Backend** | Python 3 + FastAPI + Uvicorn |
-| **Database** | Supabase (PostgreSQL) |
-| **Frontend** | Next.js (TypeScript) |
-| **Auth** | Supabase Auth + JWT |
-| **Deploy** | Railway (backend) |
-| **Env** | python-dotenv |
+### 📊 Dashboard Tài Chính
+- **Biểu đồ chi tiêu theo ngày** — Xem trend chi tiêu với line chart interactif
+- **Breakdown danh mục** — Doughnut chart hiển thị phân bố chi tiêu
+- **So sánh tháng** — So sánh thu nhập & chi tiêu với tháng trước
+- **Dự báo cuối tháng** — Tính toán chi tiêu dự kiến và số dư tháng này
 
-## Cấu trúc project
+### 🏠 Phân tích 50/30/20
+- Phân loại chi tiêu thành 3 nhóm: **Thiết yếu (50%)**, **Muốn có (30%)**, **Tiết kiệm (20%)**
+- Hiển thị trực quan với progress bar và cảnh báo khi vượt budget
+- Gợi ý gán danh mục khi chưa có dữ liệu
 
-```
-Financial-Management-Recommendation-System/
-├── .env                        ← secrets (KHÔNG commit)
-├── .gitignore
-├── requirements.txt            ← Python dependencies
-├── Procfile                    ← Railway start command
-├── database.py                 ← khởi tạo kết nối Supabase
-├── auth.py                     ← xác thực JWT / Supabase Auth
-├── main.py                     ← FastAPI app chính, CORS, routers
-├── README.md
-├── routers/
-│   ├── __init__.py
-│   ├── categories.py           ← CRUD danh mục
-│   └── transactions.py         ← CRUD + thống kê giao dịch
-└── frontend/                   ← Next.js app
-    ├── src/
-    │   ├── app/
-    │   │   ├── page.tsx        ← trang chính
-    │   │   └── dashboard/      ← dashboard tài chính
-    │   └── lib/
-    │       ├── api.ts          ← gọi backend API
-    │       └── supabase.ts     ← Supabase client
-    └── package.json
-```
+### 💳 Quản lý giao dịch & danh mục
+- Thêm giao dịch với **biểu thức toán học** (ví dụ: `33000+36000` → `69000`)
+- Quản lý danh mục thu & chi với phân loại 50/30/20
+- Collapse/expand form để tiết kiệm không gian
+- Xem chi tiết giao dịch theo ngày với bảng dữ liệu
 
-## Setup
-
-### 1. Clone repo
-
-```bash
-git clone https://github.com/DrakyNeUwU/Financial-Management-Recommendation-System.git
-cd Financial-Management-Recommendation-System
-```
-
-### 2. Cài thư viện Python
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Tạo file `.env`
-
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-```
-
-> Lấy URL và KEY từ Supabase Dashboard → Project Settings → API
-
-### 4. Tạo bảng trên Supabase
-
-Chạy trong Supabase SQL Editor:
-
-```sql
--- Bảng danh mục
-CREATE TABLE categories (
-    id             UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id        UUID REFERENCES auth.users ON DELETE CASCADE,
-    name           TEXT NOT NULL,
-    type           TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-    group_50_30_20 TEXT CHECK (group_50_30_20 IN ('needs', 'wants', 'savings')),
-    created_at     TIMESTAMPTZ DEFAULT now()
-);
-
--- Bảng giao dịch
-CREATE TABLE transactions (
-    id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id     UUID REFERENCES auth.users ON DELETE CASCADE,
-    category_id UUID REFERENCES categories(id),
-    amount      DECIMAL(12, 2) NOT NULL,
-    type        TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-    date        DATE NOT NULL,
-    note        TEXT DEFAULT '',
-    created_at  TIMESTAMPTZ DEFAULT now()
-);
-```
-
-> **Dev mode:** RLS đang tắt trên cả 2 bảng. Bật lại khi triển khai Auth.
-
-### 5. Chạy backend
-
-```bash
-python -m uvicorn main:app --reload
-```
-
-### 6. Chạy frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-| URL | Mô tả |
-|-----|-------|
-| `http://localhost:8000` | Backend API root |
-| `http://localhost:8000/docs` | Swagger UI tự động |
-| `http://localhost:3000` | Frontend Next.js |
-
-## Deploy lên Railway
-
-1. Push code lên GitHub
-2. Tạo project mới trên [Railway](https://railway.app) → connect GitHub repo
-3. Thêm **Environment Variables** trong Railway dashboard:
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
-4. Railway tự detect `Procfile` và deploy
-
-## API Endpoints
-
-### `/transactions`
-
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| `POST` | `/transactions` | Tạo giao dịch mới |
-| `GET` | `/transactions?month=MM-YYYY` | Lấy giao dịch trong tháng |
-| `GET` | `/transactions/daily-summary?month=MM-YYYY` | Tổng chi tiêu theo ngày |
-| `DELETE` | `/transactions/{id}` | Xoá giao dịch |
-
-**POST /transactions — Request body:**
-```json
-{
-  "type": "expense",
-  "amount": 50000,
-  "category_id": "uuid-của-danh-mục",
-  "transaction_date": "2026-05-16",
-  "note": "cà phê sáng"
-}
-```
-
-> `note` là optional. `transaction_date` format `YYYY-MM-DD`.
+### 🔐 Xác thực
+- Đăng nhập/đăng ký bằng **Supabase Auth**
+- JWT token validation trên Backend
+- Giao diện hiện đại với form validation
 
 ---
 
-### `/categories`
+## 🏗️ Tech Stack
 
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| `GET` | `/categories` | Lấy tất cả danh mục |
-| `POST` | `/categories` | Tạo danh mục mới |
-| `DELETE` | `/categories/{id}` | Xoá danh mục |
+| Layer | Công nghệ |
+|-------|-----------|
+| **Frontend** | Next.js 16 (TypeScript, React 19) + Tailwind CSS |
+| **Backend** | Python 3 + FastAPI + Uvicorn |
+| **Database** | Supabase (PostgreSQL) |
+| **Charts** | Chart.js + react-chartjs-2 |
+| **Auth** | Supabase Auth + JWT |
+| **Deploy** | Vercel (Frontend) + Railway (Backend) |
 
-**POST /categories — Request body:**
+---
+
+## 📁 Cấu trúc Project
+
+```
+ai-finance project/
+├── .env                              ← Environment variables (không commit)
+├── .gitignore
+├── requirements.txt                  ← Python dependencies
+├── Procfile                          ← Railway start command
+├── README.md
+├── main.py                           ← FastAPI app chính
+├── auth.py                           ← JWT & Supabase Auth
+├── database.py                       ← Supabase initialization
+├── routers/
+│   ├── __init__.py
+│   ├── categories.py                 ← CRUD danh mục
+│   └── transactions.py               ← CRUD & thống kê giao dịch
+└── frontend/
+    ├── package.json
+    ├── next.config.ts
+    ├── tsconfig.json
+    ├── postcss.config.mjs
+    ├── eslint.config.mjs
+    ├── public/
+    └── src/
+        ├── app/
+        │   ├── page.tsx              ← Dashboard chính
+        │   ├── login/page.tsx        ← Login & Register
+        │   ├── layout.tsx
+        │   ├── globals.css           ← Styles toàn app
+        │   └── dashboard/            ← Dashboard nested route
+        └── lib/
+            ├── api.ts                ← API client functions
+            ├── supabase.ts           ← Supabase client config
+            └── utils.ts              ← Format & utility functions
+```
+
+---
+
+## 🚀 Cài đặt & Chạy
+
+### Prerequisites
+- Node.js 18+
+- Python 3.8+
+- Tài khoản Supabase
+- (Optional) Railway account để deploy backend
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/DrakyNeUwU/Financial-Management-Recommendation-System.git
+cd "ai-finance project"
+```
+
+### 2. Setup Backend
+
+```bash
+# Cài thư viện Python
+pip install -r requirements.txt
+
+# Tạo file .env
+cat > .env << EOF
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key
+EOF
+
+# Chạy server
+python -m uvicorn main:app --reload
+```
+
+> Backend sẽ chạy tại `http://localhost:8000`
+> Swagger UI tại `http://localhost:8000/docs`
+
+### 3. Setup Frontend
+
+```bash
+cd frontend
+
+# Cài dependencies
+npm install
+
+# Tạo file .env.local
+cat > .env.local << EOF
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_API_URL=http://localhost:8000
+EOF
+
+# Chạy dev server
+npm run dev
+```
+
+> Frontend sẽ chạy tại `http://localhost:3000`
+
+### 4. Setup Supabase (Database & Auth)
+
+#### A. Tạo Tables
+
+Chạy SQL script này trong **Supabase SQL Editor**:
+
+```sql
+-- 1. Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 2. Categories table
+CREATE TABLE IF NOT EXISTS public.categories (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name text NOT NULL,
+    type text NOT NULL CHECK (type = ANY ('{income,expense}'::text[])),
+    group_50_30_20 text CHECK (group_50_30_20 = ANY ('{needs,wants,savings}'::text[])),
+    PRIMARY KEY (id)
+);
+
+-- 3. Transactions table
+CREATE TABLE IF NOT EXISTS public.transactions (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+    amount numeric(12,2) NOT NULL,
+    type text NOT NULL CHECK (type = ANY ('{income,expense}'::text[])),
+    date date NOT NULL,
+    note text,
+    PRIMARY KEY (id)
+);
+
+-- 4. Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_categories_user_id ON public.categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_date ON public.transactions(date);
+CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON public.transactions(category_id);
+```
+
+#### B. Enable Authentication
+- Supabase Dashboard → Authentication → Providers
+- Enable **Email** provider (default)
+- Configure email templates nếu cần
+
+---
+
+## 📡 API Endpoints
+
+### `GET /health`
+Health check endpoint
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "supabase": "connected"
+}
+```
+
+---
+
+### `POST /categories` — Tạo danh mục
+**Headers:** `Authorization: Bearer {token}`
+
+**Body:**
 ```json
 {
   "name": "Ăn uống",
@@ -166,59 +209,223 @@ npm run dev
 }
 ```
 
-> `group_50_30_20` chỉ áp dụng cho `expense`. Các giá trị hợp lệ: `needs`, `wants`, `savings`.
-
-> **Lưu ý khi xoá danh mục:** Nếu danh mục đang được dùng trong giao dịch, các giao dịch đó sẽ bị set `category_id = null` trước khi xoá.
+**Response:**
+```json
+{
+  "id": "uuid",
+  "name": "Ăn uống",
+  "type": "expense",
+  "group_50_30_20": "needs",
+  "user_id": "uuid",
+  "created_at": "2026-05-19T..."
+}
+```
 
 ---
 
-### `/health`
+### `GET /categories` — Lấy danh mục
+**Headers:** `Authorization: Bearer {token}`
 
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| `GET` | `/` | `{"message": "Finance App đang chạy!"}` |
-| `GET` | `/health` | `{"status": "ok", "supabase": "connected"}` |
-| `GET` | `/docs` | Swagger UI (FastAPI built-in) |
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "name": "Ăn uống",
+    "type": "expense",
+    "group_50_30_20": "needs"
+  }
+]
+```
 
-## Test nhanh trên PowerShell
+---
+
+### `DELETE /categories/{id}` — Xoá danh mục
+**Headers:** `Authorization: Bearer {token}`
+
+> ⚠️ Nếu danh mục có giao dịch, các giao dịch đó sẽ bị set `category_id = null`
+
+---
+
+### `POST /transactions` — Tạo giao dịch
+**Headers:** `Authorization: Bearer {token}`
+
+**Body:**
+```json
+{
+  "type": "expense",
+  "amount": 50000,
+  "category_id": "uuid",
+  "transaction_date": "2026-05-19",
+  "note": "Cà phê sáng"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "type": "expense",
+  "amount": 50000,
+  "category_id": "uuid",
+  "date": "2026-05-19",
+  "note": "Cà phê sáng",
+  "user_id": "uuid",
+  "created_at": "2026-05-19T..."
+}
+```
+
+---
+
+### `GET /transactions?month=MM-YYYY` — Lấy giao dịch trong tháng
+**Headers:** `Authorization: Bearer {token}`
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "type": "expense",
+    "amount": 50000,
+    "category_id": "uuid",
+    "date": "2026-05-19",
+    "note": "Cà phê"
+  }
+]
+```
+
+---
+
+### `DELETE /transactions/{id}` — Xoá giao dịch
+**Headers:** `Authorization: Bearer {token}`
+
+---
+
+## 🧪 Test API (PowerShell)
 
 ```powershell
 # Health check
 irm "http://localhost:8000/health"
 
-# Lấy danh mục
-irm "http://localhost:8000/categories" | ConvertTo-Json -Depth 5
+# Lấy danh mục (cần token)
+irm "http://localhost:8000/categories" -Headers @{
+  "Authorization" = "Bearer YOUR_JWT_TOKEN"
+}
 
-# Lấy giao dịch tháng 5/2026
-irm "http://localhost:8000/transactions?month=05-2026" | ConvertTo-Json -Depth 5
-
-# Thêm giao dịch
-irm "http://localhost:8000/transactions" -Method POST -ContentType "application/json" `
-  -Body '{"type":"expense","amount":50000,"category_id":"your-uuid","transaction_date":"2026-05-16","note":"test"}'
-
-# Xoá giao dịch
-irm "http://localhost:8000/transactions/your-uuid" -Method DELETE
-
-# Thêm danh mục
-irm "http://localhost:8000/categories" -Method POST -ContentType "application/json" `
-  -Body '{"name":"Ăn uống","type":"expense","group_50_30_20":"needs"}'
-
-# Xoá danh mục
-irm "http://localhost:8000/categories/your-uuid" -Method DELETE
+# Tạo giao dịch
+irm "http://localhost:8000/transactions" -Method POST `
+  -ContentType "application/json" `
+  -Headers @{"Authorization" = "Bearer YOUR_JWT_TOKEN"} `
+  -Body '{"type":"expense","amount":50000,"category_id":"uuid","transaction_date":"2026-05-19","note":"test"}'
 ```
-
-## Lưu ý
-
-- File `.env` đã có trong `.gitignore` — **không commit lên GitHub**
-- Thêm biến môi trường trực tiếp trên Railway dashboard khi deploy
-- RLS đang tắt trên cả 2 bảng (dev mode) — bật lại khi làm Auth production
-- CORS đang để `allow_origins=["*"]` — giới hạn lại khi deploy production
-- Ô số tiền hỗ trợ biểu thức: nhập `33000+36000` → tự tính ra `69000`
 
 ---
 
-## 🎨 Cập nhật UI & Analytics
+## 🎨 UI/UX Improvements (v1.2.0)
 
-- **Landing Page & Auth (Tự động):** Tích hợp giao diện Split Layout cực kỳ hiện đại ngay trên trang chủ (`/`), hiển thị tính năng cốt lõi và form đăng nhập cùng lúc.
-- **Typography:** Đã chuyển toàn bộ font chữ sang **Inter** để tối ưu hiển thị số liệu tài chính.
-- **Analytics:** Hỗ trợ tích hợp [PostHog](https://posthog.com) cho Frontend (theo dõi sự kiện người dùng và mức độ tương tác).
+### Recent Updates
+✅ **Amount Display** — Tối ưu font-size để hiển thị đủ 9 chữ số  
+✅ **Month Comparison Colors** — Cải thiện logic màu: tăng = xanh ✓, giảm = đỏ ✗  
+✅ **Form Collapse** — Form nhập liệu có thể collapse/expand để tiết kiệm không gian  
+✅ **50/30/20 Suggestions** — Gợi ý gán nhóm cho danh mục khi chưa có dữ liệu  
+✅ **Line Chart Tooltip** — Thêm ngày vào tooltip khi hover (ví dụ: "Ngày 15")  
+
+### Design Features
+- **Dark theme** với color scheme: Dark Blue, Neon Green, Red, Gray
+- **Responsive layout** — Sidebar + Right column grid layout
+- **Typography** — Inter font cho tối ưu tài chính
+- **Charts** — Chart.js với custom tooltip & styling
+- **Glassmorphism** — Auth page với blur effect modern
+
+---
+
+## 🚢 Deployment
+
+### Frontend (Vercel)
+1. Push code lên GitHub
+2. Kết nối repo với [Vercel](https://vercel.com)
+3. Thêm Environment Variables trong Vercel Dashboard:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=...
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   NEXT_PUBLIC_API_URL=https://your-railway-backend.up.railway.app
+   ```
+4. Deploy tự động khi push lên `main` branch
+
+### Backend (Railway)
+1. Tạo project trên [Railway](https://railway.app)
+2. Connect GitHub repo
+3. Add Environment Variables:
+   ```
+   SUPABASE_URL=...
+   SUPABASE_KEY=...
+   ```
+4. Railway sẽ detect `Procfile` và deploy tự động
+
+---
+
+## 📝 Features Roadmap
+
+- [ ] Budget alerts & notifications
+- [ ] Export data to CSV/PDF
+- [ ] Multi-currency support
+- [ ] Recurring transactions
+- [ ] Investment tracking
+- [ ] Mobile app (React Native)
+- [ ] Advanced analytics & insights
+
+---
+
+## 🔐 Security Notes
+
+- `.env` file đã trong `.gitignore` — **không commit credentials**
+- RLS (Row Level Security) tắt trong dev mode — **bật lại trên production**
+- CORS chỉ cho phép từ Vercel frontend + localhost
+- JWT token được validate trên mỗi request
+
+---
+
+## 📚 Documentation
+
+- **FastAPI Docs:** `http://localhost:8000/docs` (Swagger UI)
+- **Next.js Docs:** https://nextjs.org/docs
+- **Supabase Docs:** https://supabase.com/docs
+- **Chart.js Docs:** https://www.chartjs.org/docs
+
+---
+
+## 🤝 Contributing
+
+Contributions được chào đón! Vui lòng:
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+---
+
+## 📄 License
+
+MIT License — Xem [LICENSE](LICENSE) file cho chi tiết
+
+---
+
+## 👨‍💻 Author
+
+**Khanh Nguyen** — [GitHub](https://github.com/DrakyNeUwU)
+
+---
+
+## 📞 Support
+
+Nếu có vấn đề:
+1. Check [GitHub Issues](https://github.com/DrakyNeUwU/Financial-Management-Recommendation-System/issues)
+2. Xem setup instructions lại
+3. Kiểm tra Supabase connection
+4. Tạo issue mới nếu problem không solve được
+
+---
+
+**Last Updated:** May 19, 2026  
+**Version:** 1.2.0

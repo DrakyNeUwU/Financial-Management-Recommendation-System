@@ -238,7 +238,7 @@ select option { background: var(--surface2); }
 .monthly-donut { position: relative; width: 180px; height: 180px; margin: 0 auto; }
 .monthly-donut canvas { width: 100% !important; height: 100% !important; }
 .monthly-total .eyebrow { font-size: 0.72rem; color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-.monthly-total .amount { font-family: var(--font-mono); font-size: clamp(1.4rem,2.5vw,1.8rem); font-weight: 700; color: var(--text); line-height: 1.05; word-break: break-word; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.monthly-total .amount { font-family: var(--font-mono); font-size: clamp(1.1rem,1.8vw,1.3rem); font-weight: 700; color: var(--text); line-height: 1.05; word-break: break-word; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .monthly-total .subtext { margin-top: 6px; font-size: 0.78rem; color: var(--muted); font-family: var(--font-mono); }
 
 .monthly-list { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow: auto; padding-right: 4px; }
