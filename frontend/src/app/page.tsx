@@ -99,12 +99,13 @@ export default function DashboardPage() {
     return true
   }
 
-  // Fetch previous month for comparison
+  // Fetch previous month for comparison (only init once)
   useEffect(() => {
+    if (compMonthStr) return // Don't override if user already selected
     const prevM = month === 1 ? 12 : month - 1
     const prevY = month === 1 ? year - 1 : year
     setCompMonthStr(`${prevY}-${String(prevM).padStart(2, '0')}`)
-  }, [month, year])
+  }, [month, year, compMonthStr])
 
   useEffect(() => {
     if (!compMonthStr) return
