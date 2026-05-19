@@ -149,7 +149,8 @@ export default function DashboardPage() {
     setSubmitting(true)
     try {
       await createTransaction({ type, amount, category_id: categoryId, transaction_date: txDate, note: note || undefined })
-      setAmountRaw(''); setNote('')      setFormExpanded(false)      showToast('Đã lưu ✓', 'success')
+      setAmountRaw(''); setNote(''); setFormExpanded(false)
+      showToast('Đã lưu ✓', 'success')
       await loadAll()
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : 'Lỗi lưu giao dịch', 'error')
