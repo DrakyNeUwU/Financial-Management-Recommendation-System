@@ -341,8 +341,8 @@ export default function DashboardPage() {
           <div className="month-nav" style={{ padding: '14px 18px', borderRadius: '12px', background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <button onClick={prevMonth}>←</button>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span id="month-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: 90, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>
-                {monthLabel}
+              <span id="month-label" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: 110, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>
+                Tháng {monthLabel}
               </span>
               <input 
                 type="month"
