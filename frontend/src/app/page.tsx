@@ -627,7 +627,24 @@ export default function DashboardPage() {
           {/* Month Comparison */}
           <div className="card">
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, textTransform: 'uppercase' }}>
-              <span style={{ letterSpacing: '0.05em' }}>SO SÁNH CHI TIÊU THÁNG {String(month).padStart(2, '0')}/{year} VÀ THÁNG</span>
+              <span style={{ letterSpacing: '0.05em' }}>SO SÁNH CHI TIÊU THÁNG</span>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'var(--surface2)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text)', letterSpacing: 'normal' }}>
+                  {String(month).padStart(2, '0')}/{year}
+                </span>
+                <input 
+                  type="month" 
+                  value={`${year}-${String(month).padStart(2, '0')}`}
+                  onChange={e => {
+                    if (!e.target.value) return
+                    const [y, m] = e.target.value.split('-')
+                    if (y && m) { setYear(parseInt(y)); setMonth(parseInt(m)) }
+                  }}
+                  onClick={e => (e.target as HTMLInputElement).showPicker?.()}
+                  style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} 
+                />
+              </div>
+              <span style={{ letterSpacing: '0.05em' }}>VÀ THÁNG</span>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center', background: 'var(--surface2)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border)' }}>
                 <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text)', letterSpacing: 'normal' }}>
                   {compMonthStr ? `${compMonthStr.split('-')[1]}/${compMonthStr.split('-')[0]}` : '--/----'}
