@@ -536,6 +536,58 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Day Table */}
+          <div className="card">
+            <div className="card-title">Giao dịch theo ngày — click để xem chi tiết</div>
+            <div className="day-table-header">
+              <span>Ngày</span><span>Thu nhập</span><span>Chi tiêu</span>
+            </div>
+            <div className="day-list">
+              {loading ? <div className="loading">đang tải...</div> : dayRows.map(d => {
+                const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                const dayTxs = txByDay[ds] || []
+                const inc = dayTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+                const exp = dayTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+                const isEmpty = dayTxs.length === 0
+                const isToday = ds === todayStr
+                const dayLabel = `${String(d).padStart(2,'0')}/${String(month).padStart(2,'0')}`
+                const open = openDays.has(ds)
+                return (
+                  <div key={ds}>
+                    <div className="day-row-header" onClick={() => toggleDay(ds)}>
+                      <div className={`day-date${isToday ? ' today' : isEmpty ? ' empty' : ''}`}>
+                        {dayLabel}{isToday ? ' ●' : ''}
+                      </div>
+                      <div className={inc > 0 ? 'day-income' : 'day-zero'}>{inc > 0 ? '+' + fmtShort(inc) : '—'}</div>
+                      <div className={exp > 0 ? 'day-expense' : 'day-zero'}>{exp > 0 ? '−' + fmtShort(exp) : '—'}</div>
+                    </div>
+                    <div className={`tx-details${open ? ' open' : ''}`}>
+                      {dayTxs.length === 0
+                        ? <div style={{ fontSize: '0.72rem', color: 'var(--muted)', padding: '4px 0', fontFamily: 'var(--font-mono)' }}>Không có giao dịch</div>
+                        : dayTxs.map(tx => (
+                            <div key={tx.id} className="tx-detail-item">
+                              <div className={`tx-detail-dot ${tx.type}`} />
+                              <div className="tx-detail-cat">
+                                {getCatName(tx.category_id)}
+                                {tx.note && <span className="tx-detail-note">— {tx.note}</span>}
+                              </div>
+                              <div className="tx-detail-actions">
+                                <div className={`tx-detail-amount ${tx.type}`}>
+                                  {tx.type === 'income' ? '+' : '−'}{fmt(tx.amount)}
+                                </div>
+                                <button className="btn-delete-tx" title="Xoá giao dịch"
+                                  onClick={() => handleDeleteTx(tx.id)}>×</button>
+                              </div>
+                            </div>
+                          ))
+                      }
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
           </div>
         {/* ── RIGHT COLUMN ── */}
         <div className="right-column">
